@@ -1,0 +1,178 @@
+export type Language = "en" | "hi";
+
+export const translations = {
+  en: {
+    portalTitle: "Sahaj Seva Portal",
+    portalSubtitle: "Government of Uttar Pradesh • District Administration Ghaziabad",
+    tagline: "Work done in one go — end repeated office rounds",
+    taglineSub: "Ghaziabad Seva First Innovation Challenge 2026",
+    searchPlaceholder: "What service or certificate do you need? (e.g., Income, Mutation, Ration Card...)",
+    trackPlaceholder: "Enter 16-digit Application Tracking Number (e.g. GZB-INC-2026-0001)",
+    trackButton: "Track Status",
+    popularServices: "Most Requested Public Services",
+    whySahaj: "Why Sahaj Seva Portal?",
+    feature1Title: "Pre-Check Before You Step Out",
+    feature1Desc: "AI & rule engine checks your documents at home so you are never turned back for missing papers.",
+    feature2Title: "Guaranteed 15-Minute Slot",
+    feature2Desc: "Physical visits are strictly limited to when legally unavoidable. Book an exact slot with a QR token.",
+    feature3Title: "Live Courier-Style Tracking",
+    feature3Desc: "Know exactly which officer has your file, estimated finish date, and live reason if stuck.",
+    feature4Title: "Zero Repeat Rounds Target",
+    feature4Desc: "Direct officer accountability to reduce average citizen visits from 3.2 rounds down to 1.1 rounds.",
+    
+    // Nav & Common
+    home: "Home",
+    services: "Services Guide",
+    smartChecklist: "Smart Checklist",
+    applyOnline: "Apply Online",
+    trackApp: "Live Tracker",
+    bookSlot: "Book Slot",
+    notifications: "SMS / WhatsApp Logs",
+    grievance: "Help & Escalation",
+    downloads: "Download Center",
+    officerPortal: "Officer Desk",
+    adminDashboard: "District Analytics",
+    login: "Sign In",
+    logout: "Sign Out",
+    demoModeBadge: "Demo Mode Active",
+    simulateJourney: "Simulate Citizen Journey",
+
+    // Roles
+    citizenRole: "Citizen",
+    officerRole: "Counter Officer",
+    headRole: "Department Head / SDM",
+    cdoRole: "District Admin (CDO)",
+
+    // Checklist & Guides
+    eligibility: "Eligibility & Rules",
+    documentsRequired: "Required Documents & Accepted Alternatives",
+    fee: "Govt Fee",
+    timeRequired: "SLA Processing Time",
+    office: "Designated Office",
+    visitsRequired: "Visits Required",
+    commonMistakes: "Common Mistakes That Cause Rejections",
+    downloadChecklist: "Download Custom Checklist (PDF)",
+    startApplication: "Apply for this Service",
+    zeroVisits: "0 Visits (100% Online)",
+    oneVisit: "1 Visit (Only for Biometric/Registry)",
+
+    // Precheck
+    precheckTitle: "Document Pre-Check & Readiness Score",
+    precheckDesc: "Our automated validator verifies your documents against Tehsil acceptance rules before final submission.",
+    visitReadyScore: "Visit-Ready Score",
+    readyForSubmission: "Ready to Submit",
+    needsCorrection: "Needs Correction",
+    criticalIssues: "Fix issues below to avoid repeated office visits",
+    simulatedAiLabel: "Simulated Heuristic & Rule Engine Check (Zero OCR Hallucination)",
+
+    // Officer
+    counterMode: "2-Minute Fast Counter Mode",
+    scanQrPlaceholder: "Scan or enter citizen token QR code (e.g. GZB-T104)...",
+    verifyAndComplete: "Mark Visit Completed (Under 2 Min)",
+    logRepeatVisit: "Log Repeat Visit Reason",
+    selectRepeatReason: "Select reason why a repeat visit was needed",
+
+    // Admin & Analytics
+    repeatVisitRate: "Repeat Visit Rate",
+    withoutPortal: "Without Portal: 3.2 visits (Sample Baseline)",
+    withPortal: "With Portal: 1.1 visits (Demonstrated Target)",
+    topRepeatReasons: "Top Drivers of Citizen Repeat Visits",
+    reworkByService: "Applications Requiring Repeat Visits by Service",
+    officePerformance: "Offices Ranked by Repeat Visit Efficiency",
+    slaPendency: "Pendency & SLA Compliance",
+    insightsAndReco: "Automated District Insights & AI Recommendations",
+    exportWeeklyReport: "Export District Weekly Report (PDF)",
+
+    // Security & Privacy
+    prototypeNotice: "Ghaziabad Seva First Innovation Prototype. Designed for e-District / UP-Portal architecture.",
+    aadhaarMaskedNotice: "Aadhaar number is strictly masked. Only last 4 digits are shown for citizen privacy.",
+    deleteMyData: "Delete My Data (GDPR/DPDP compliance)",
+  },
+  hi: {
+    portalTitle: "सहज सेवा पोर्टल",
+    portalSubtitle: "उत्तर प्रदेश सरकार • ज़िला प्रशासन गाज़ियाबाद",
+    tagline: "एक बार में काम, बार-बार का चक्कर खत्म",
+    taglineSub: "गाज़ियाबाद सेवा फर्स्ट इनोवेशन चैलेंज 2026",
+    searchPlaceholder: "आपको कौन सी सरकारी सेवा चाहिए? (जैसे आय प्रमाण पत्र, दाखिल-खारिज, राशन कार्ड...)",
+    trackPlaceholder: "16-अंकों का आवेदन ट्रैकिंग नंबर दर्ज करें (उदा. GZB-INC-2026-0001)",
+    trackButton: "स्थिति देखें",
+    popularServices: "सर्वाधिक आवश्यक जनसेवाएं",
+    whySahaj: "सहज सेवा पोर्टल क्यों?",
+    feature1Title: "घर बैठे पूर्व-जाँच (Pre-Check)",
+    feature1Desc: "कार्यालय जाने से पहले ही दस्तावेजों की जांच, ताकि कागजात की कमी से कोई नागरिक वापस न लौटे।",
+    feature2Title: "निश्चित 15-मिनट का समय स्लॉट",
+    feature2Desc: "दफ्तर जाना केवल तभी जब कानूनन अनिवार्य हो। क्यूआर ई-टोकन के साथ तय समय पर काम।",
+    feature3Title: "कूरियर जैसा लाइव ट्रैकिंग",
+    feature3Desc: "आवेदन किस अधिकारी की मेज पर है, संभावित पूर्णता तिथि, और अटकने पर सीधा कारण एवं समाधान।",
+    feature4Title: "शून्य दोहराव का लक्ष्य",
+    feature4Desc: "नागरिकों के दफ्तर के चक्कर 3.2 बार से घटाकर मात्र 1.1 बार (या 0 बार) करने का संकल्प।",
+
+    // Nav & Common
+    home: "मुख्य पृष्ठ",
+    services: "सेवा मार्गदर्शिका",
+    smartChecklist: "स्मार्ट चेकलिस्ट",
+    applyOnline: "ऑनलाइन आवेदन",
+    trackApp: "लाइव ट्रैकर",
+    bookSlot: "स्लॉट बुकिंग",
+    notifications: "एसएमएस / व्हाट्सएप संदेश",
+    grievance: "मदद एवं शिकायत",
+    downloads: "डाउनलोड केंद्र",
+    officerPortal: "अधिकारी डेस्क",
+    adminDashboard: "ज़िला विश्लेषिकी",
+    login: "लॉगिन करें",
+    logout: "लॉगआउट",
+    demoModeBadge: "डेमो मोड सक्रिय",
+    simulateJourney: "नागरिक यात्रा सिमुलेशन",
+
+    // Roles
+    citizenRole: "नागरिक",
+    officerRole: "काउंटर अधिकारी",
+    headRole: "विभागाध्यक्ष / उप-जिलाधिकारी",
+    cdoRole: "मुख्य विकास अधिकारी (CDO)",
+
+    // Checklist & Guides
+    eligibility: "पात्रता एवं नियम",
+    documentsRequired: "आवश्यक दस्तावेज एवं मान्य विकल्प",
+    fee: "सरकारी शुल्क",
+    timeRequired: "कार्य निस्तारण समय (SLA)",
+    office: "संबंधित कार्यालय",
+    visitsRequired: "आवश्यक दफ्तर फेरे",
+    commonMistakes: "अक्सर होने वाली गलतियाँ जिससे आवेदन खारिज होता है",
+    downloadChecklist: "व्यक्तिगत चेकलिस्ट डाउनलोड करें (PDF)",
+    startApplication: "इस सेवा के लिए आवेदन करें",
+    zeroVisits: "0 फेरे (100% ऑनलाइन)",
+    oneVisit: "1 फेरा (केवल बायोमेट्रिक/रजिस्ट्री हेतु)",
+
+    // Precheck
+    precheckTitle: "दस्तावेज पूर्व-जाँच एवं तैयारी स्कोर",
+    precheckDesc: "हमारा स्वचालित जांच इंजन तहसील नियमों के अनुसार आवेदन जमा करने से पहले ही त्रुटि बता देता है।",
+    visitReadyScore: "दौरा-तैयारी स्कोर (Visit-Ready Score)",
+    readyForSubmission: "आवेदन जमा करने हेतु तैयार",
+    needsCorrection: "दस्तावेज सुधार आवश्यक",
+    criticalIssues: "दफ्तर के बार-बार चक्कर से बचने के लिए नीचे दी गई कमियां सुधारें",
+    simulatedAiLabel: "सिम्युलेटेड ह्युरिस्टिक एवं नियम आधारित जांच (शून्य गलत दावा)",
+
+    // Officer
+    counterMode: "2-मिनट त्वरित काउंटर मोड",
+    scanQrPlaceholder: "नागरिक का क्यूआर कोड स्कैन करें या टोकन नंबर डालें...",
+    verifyAndComplete: "दौरा पूर्ण मार्क करें (2 मिनट से कम में)",
+    logRepeatVisit: "दोबारा चक्कर का कारण दर्ज करें",
+    selectRepeatReason: "नागरिक को दोबारा क्यों आना पड़ा? कारण चुनें",
+
+    // Admin & Analytics
+    repeatVisitRate: "दोहराव फेरा दर (Repeat Visit Rate)",
+    withoutPortal: "पोर्टल के बिना: 3.2 फेरे (सैंपल बेसलाइन)",
+    withPortal: "पोर्टल के साथ: 1.1 फेरे (प्रदर्शित लक्ष्य)",
+    topRepeatReasons: "नागरिकों के दोबारा आने के मुख्य कारण",
+    reworkByService: "सेवा-वार दोहराव का विश्लेषण",
+    officePerformance: "दफ्तर रैंकिंग (दक्षता एवं न्यूनतम चक्कर)",
+    slaPendency: "लंबित आवेदन एवं समयबद्धता (SLA)",
+    insightsAndReco: "स्वचालित जिला अंतर्दृष्टि एवं सुझाव",
+    exportWeeklyReport: "साप्ताहिक ज़िला रिपोर्ट डाउनलोड करें (PDF)",
+
+    // Security & Privacy
+    prototypeNotice: "गाज़ियाबाद सेवा फर्स्ट इनोवेशन प्रोटोटाइप। ई-डिस्ट्रिक्ट एवं यूपी पोर्टल आर्किटेक्चर के अनुरूप।",
+    aadhaarMaskedNotice: "नागरिक गोपनीयता हेतु आधार कार्ड के केवल अंतिम 4 अंक प्रदर्शित किए जाते हैं।",
+    deleteMyData: "मेरा डेटा हटाएं (DPDP अधिनियम अनुपालन)",
+  },
+};

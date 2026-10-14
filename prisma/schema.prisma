@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id          String   @id @default(cuid())
+  phone       String?  @unique
+  email       String?  @unique
+  name        String
+  role        String   @default("CITIZEN") // CITIZEN, OFFICER, HEAD, CDO
+  officeId    String?
+  createdAt   DateTime @default(now())
+}
+
+model Office {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  nameHi       String
+  address      String
+  zone         String
+  tehsil       String
+  lat          Float
+  lng          Float
+  officerCount Int      @default(5)
+  contactPhone String   @default("0120-2820000")
+  createdAt    DateTime @default(now())
+}
+
+model Service {
+  id                    String   @id @default(cuid())
+  code                  String   @unique
+  name                  String
+  nameHi                String
+  description           String
+  descriptionHi         String
+  category              String
+  fee                   Int      @default(0)
+  slaDays               Int      @default(7)
+  physicalVisitRequired Boolean  @default(false) // Target: 0 or 1 visit
+  processType           String   @default("ONLINE") // "ONLINE", "SEMI_ONLINE", "OFFLINE"
+  carryDocsJson         String   @default("[]") // Original documents to carry to office for reverification
+  officeType            String   // Tehsil, Nagar Nigam, RTO, DSO, Collectorate
+  commonMistakes        String   // JSON string array
+  commonMistakesHi      String   // JSON string array
+  stepsJson             String   // JSON string array of steps
+  createdAt             DateTime @default(now())
+}
+
+model ServiceDocument {
+  id               String  @id @default(cuid())
+  serviceId        String
+  docCode          String
+  name             String
+  nameHi           String
+  isMandatory      Boolean @default(true)
+  alternativesJson String  // JSON array of strings: e.g. ["Aadhaar Card", "Voter ID", "Passport"]
+  criteriaJson     String  // JSON: { maxSizeMb: 5, allowedTypes: ["pdf","jpg","png"], maxAgeYears: null }
+  order            Int     @default(1)
+}
+
+model Application {
+  id                      String    @id @default(cuid())
+  trackingNumber          String    @unique
+  serviceId               String
+  userId                  String?
+  citizenName             String
+  citizenPhone            String
+  citizenAadhaarLast4     String
+  officeId                String
+  status                  String    @default("SUBMITTED") // DRAFT, PRECHECK_FAILED, SUBMITTED, DOCS_VERIFIED, IN_REVIEW, ACTION_REQUIRED, APPROVED, VISIT_SCHEDULED, VISIT_COMPLETED, REJECTED
+  currentStage            String    @default("Submitted")
+  visitReadyScore         Int       @default(85)
+  stuckReason             String?
+  stuckReasonHi           String?
+  actionRequiredDetails   String?
+  assignedOfficerName     String?   @default("Desk 3 - Verifying Officer")
+  estimatedCompletionDate DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+}
+
+model ApplicationDocument {
+  id               String   @id @default(cuid())
+  applicationId    String
+  docCode          String
+  docName          String
+  fileUrl          String
+  fileType         String
+  fileSizeKb       Int
+  status           String   @default("PASS") // PASS, WARNING, REJECTED
+  issuesJson       String   @default("[]") // JSON array of string issues
+  simulatedAiScore Int      @default(95)
+  uploadedAt       DateTime @default(now())
+}
+
+model ApplicationEvent {
+  id            String   @id @default(cuid())
+  applicationId String
+  stage         String
+  title         String
+  titleHi       String
+  description   String
+  descriptionHi String
+  actorRole     String
+  actorName     String
+  deskInfo      String
+  timestamp     DateTime @default(now())
+}
+
+model Slot {
+  id          String   @id @default(cuid())
+  officeId    String
+  date        String   // YYYY-MM-DD
+  startTime   String   // e.g. "10:00 AM"
+  endTime     String   // e.g. "10:15 AM"
+  capacity    Int      @default(15)
+  bookedCount Int      @default(0)
+  isAvailable Boolean  @default(true)
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  applicationId  String   @unique
+  slotId         String
+  tokenNumber    String   // e.g. "GZB-T104"
+  qrCodeData     String
+  date           String
+  timeSlot       String
+  officeId       String
+  status         String   @default("BOOKED") // BOOKED, CHECKED_IN, COMPLETED, NO_SHOW, CANCELLED
+  createdAt      DateTime @default(now())
+}
+
+model Visit {
+  id              String   @id @default(cuid())
+  bookingId       String?
+  applicationId   String
+  officerId       String
+  officeId        String
+  durationMinutes Int      @default(2)
+  isRepeatVisit   Boolean  @default(false)
+  repeatReason    String?  // Missing affidavit, Signature mismatch, Fee slip unverified, Original verification, Biometric retry
+  notes           String?
+  completedAt     DateTime @default(now())
+}
+
+model Grievance {
+  id              String   @id @default(cuid())
+  ticketNumber    String   @unique
+  applicationId   String
+  citizenName     String
+  citizenPhone    String
+  officeId        String
+  issueCategory   String   // "Stuck over 7 days", "Document rejected without explanation", "Counter delay"
+  description     String
+  status          String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  resolutionNotes String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model NotificationLog {
+  id             String   @id @default(cuid())
+  recipientPhone String
+  recipientName  String
+  channel        String   // SMS, WHATSAPP
+  title          String
+  message        String
+  status         String   @default("DELIVERED")
+  applicationId  String?
+  timestamp      DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String
+  actorName   String
+  actorRole   String
+  action      String
+  entityType  String
+  entityId    String
+  detailsJson String
+  timestamp   DateTime @default(now())
+}
