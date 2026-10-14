@@ -92,7 +92,7 @@ export function SimulateJourneyModal() {
                 <div>
                   <div className="font-bold text-sm">Step 1: Citizen Selects Service</div>
                   <p className="mt-0.5 text-gray-700">
-                    A citizen in Raj Nagar needs an <strong>Income Certificate (आय प्रमाण पत्र)</strong> for their daughter's scholarship. They don't know what docs are valid or which office to visit.
+                    A citizen in Raj Nagar needs an <strong>Income Certificate (आय प्रमाण पत्र)</strong> for their daughter&apos;s scholarship. They don&apos;t know what docs are valid or which office to visit.
                   </p>
                 </div>
               </div>

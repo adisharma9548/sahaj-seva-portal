@@ -3,23 +3,98 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
+// ==============================================================================
+// Enums
+// ==============================================================================
+
+enum Role {
+  CITIZEN
+  OFFICER
+  HEAD
+  CDO
+}
+
+enum ApplicationStatus {
+  DRAFT
+  PRECHECK_FAILED
+  SUBMITTED
+  DOCS_VERIFIED
+  IN_REVIEW
+  ACTION_REQUIRED
+  APPROVED
+  VISIT_SCHEDULED
+  VISIT_COMPLETED
+  REJECTED
+}
+
+enum BookingStatus {
+  BOOKED
+  CHECKED_IN
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}
+
+enum DocStatus {
+  PASS
+  WARNING
+  REJECTED
+}
+
+enum GrievanceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum NotificationChannel {
+  SMS
+  WHATSAPP
+}
+
+enum ProcessType {
+  ONLINE
+  SEMI_ONLINE
+  OFFLINE
+}
+
+// ==============================================================================
+// Models
+// ==============================================================================
+
 model User {
-  id          String   @id @default(cuid())
-  phone       String?  @unique
-  email       String?  @unique
-  name        String
-  role        String   @default("CITIZEN") // CITIZEN, OFFICER, HEAD, CDO
-  officeId    String?
-  createdAt   DateTime @default(now())
+  id            String        @id @default(cuid())
+  phone         String?       @unique
+  email         String?       @unique
+  name          String
+  role          Role          @default(CITIZEN)
+  officeId      String?
+  office        Office?       @relation(fields: [officeId], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // DPDP 2023 Compliance & Soft-delete
+  deletedAt     DateTime?
+  isAnonymized  Boolean       @default(false)
+  anonymizedAt  DateTime?
+
+  // Relations
+  applications  Application[]
+  handledVisits Visit[]       @relation("OfficerHandledVisits")
+
+  @@index([phone])
+  @@index([email])
+  @@index([officeId])
+  @@index([role])
 }
 
 model Office {
-  id           String   @id @default(cuid())
-  code         String   @unique
+  id           String        @id @default(cuid())
+  code         String        @unique
   name         String
   nameHi       String
   address      String
@@ -27,81 +102,145 @@ model Office {
   tehsil       String
   lat          Float
   lng          Float
-  officerCount Int      @default(5)
-  contactPhone String   @default("0120-2820000")
-  createdAt    DateTime @default(now())
+  officerCount Int           @default(5)
+  contactPhone String        @default("0120-2820000")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Source citation for zero fabrication
+  source       String        @default("UP Local Government Directory (LGD)")
+  verifiedAt   DateTime?
+
+  // Relations
+  users        User[]
+  applications Application[]
+  slots        Slot[]
+  bookings     Booking[]
+  visits       Visit[]
+  grievances   Grievance[]
+
+  @@index([zone])
+  @@index([tehsil])
 }
 
 model Service {
-  id                    String   @id @default(cuid())
-  code                  String   @unique
+  id                    String            @id @default(cuid())
+  code                  String            @unique
   name                  String
   nameHi                String
   description           String
   descriptionHi         String
   category              String
-  fee                   Int      @default(0)
-  slaDays               Int      @default(7)
-  physicalVisitRequired Boolean  @default(false) // Target: 0 or 1 visit
-  processType           String   @default("ONLINE") // "ONLINE", "SEMI_ONLINE", "OFFLINE"
-  carryDocsJson         String   @default("[]") // Original documents to carry to office for reverification
-  officeType            String   // Tehsil, Nagar Nigam, RTO, DSO, Collectorate
-  commonMistakes        String   // JSON string array
-  commonMistakesHi      String   // JSON string array
-  stepsJson             String   // JSON string array of steps
-  createdAt             DateTime @default(now())
+  fee                   Int               @default(0)
+  slaDays               Int               @default(7)
+  physicalVisitRequired Boolean           @default(false)
+  processType           ProcessType       @default(ONLINE)
+  carryDocsJson         Json              @default("[]")
+  officeType            String
+  commonMistakes        Json              @default("[]")
+  commonMistakesHi      Json              @default("[]")
+  stepsJson             Json              @default("[]")
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  // Source citation for zero fabrication
+  source                String            @default("UP e-District Citizen Charter & Janhit Guarantee Act")
+  verifiedAt            DateTime?
+
+  // Relations
+  documents             ServiceDocument[]
+  applications          Application[]
+
+  @@index([category])
+  @@index([processType])
+  @@index([officeType])
 }
 
 model ServiceDocument {
-  id               String  @id @default(cuid())
+  id               String   @id @default(cuid())
   serviceId        String
+  service          Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   docCode          String
   name             String
   nameHi           String
-  isMandatory      Boolean @default(true)
-  alternativesJson String  // JSON array of strings: e.g. ["Aadhaar Card", "Voter ID", "Passport"]
-  criteriaJson     String  // JSON: { maxSizeMb: 5, allowedTypes: ["pdf","jpg","png"], maxAgeYears: null }
-  order            Int     @default(1)
+  isMandatory      Boolean  @default(true)
+  alternativesJson Json     @default("[]")
+  criteriaJson     Json     @default("{}")
+  order            Int      @default(1)
+
+  @@index([serviceId])
+  @@index([docCode])
 }
 
 model Application {
-  id                      String    @id @default(cuid())
-  trackingNumber          String    @unique
+  id                      String                @id @default(cuid())
+  trackingNumber          String                @unique
   serviceId               String
+  service                 Service               @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   userId                  String?
+  user                    User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
   citizenName             String
   citizenPhone            String
   citizenAadhaarLast4     String
   officeId                String
-  status                  String    @default("SUBMITTED") // DRAFT, PRECHECK_FAILED, SUBMITTED, DOCS_VERIFIED, IN_REVIEW, ACTION_REQUIRED, APPROVED, VISIT_SCHEDULED, VISIT_COMPLETED, REJECTED
-  currentStage            String    @default("Submitted")
-  visitReadyScore         Int       @default(85)
+  office                  Office                @relation(fields: [officeId], references: [id], onDelete: Restrict)
+  status                  ApplicationStatus     @default(SUBMITTED)
+  currentStage            String                @default("Submitted")
+  visitReadyScore         Int                   @default(85)
   stuckReason             String?
   stuckReasonHi           String?
   actionRequiredDetails   String?
-  assignedOfficerName     String?   @default("Desk 3 - Verifying Officer")
+  assignedOfficerName     String?               @default("Desk 3 - Verifying Officer")
   estimatedCompletionDate DateTime?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+
+  // DPDP 2023 Compliance & Soft-delete
+  deletedAt               DateTime?
+  isAnonymized            Boolean               @default(false)
+  anonymizedAt            DateTime?
+
+  // Relations
+  documents               ApplicationDocument[]
+  events                  ApplicationEvent[]
+  booking                 Booking?
+  visits                  Visit[]
+  grievances              Grievance[]
+  notifications           NotificationLog[]
+
+  @@index([officeId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([citizenPhone])
+  @@index([serviceId])
+  @@index([userId])
 }
 
 model ApplicationDocument {
-  id               String   @id @default(cuid())
+  id               String      @id @default(cuid())
   applicationId    String
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   docCode          String
   docName          String
   fileUrl          String
   fileType         String
   fileSizeKb       Int
-  status           String   @default("PASS") // PASS, WARNING, REJECTED
-  issuesJson       String   @default("[]") // JSON array of string issues
-  simulatedAiScore Int      @default(95)
-  uploadedAt       DateTime @default(now())
+  status           DocStatus   @default(PASS)
+  issuesJson       Json        @default("[]")
+  simulatedAiScore Int         @default(95)
+  uploadedAt       DateTime    @default(now())
+
+  // DPDP Compliance
+  deletedAt        DateTime?
+
+  @@index([applicationId])
+  @@index([docCode])
 }
 
 model ApplicationEvent {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   stage         String
   title         String
   titleHi       String
@@ -110,71 +249,116 @@ model ApplicationEvent {
   actorRole     String
   actorName     String
   deskInfo      String
-  timestamp     DateTime @default(now())
+  timestamp     DateTime    @default(now())
+
+  @@index([applicationId])
+  @@index([timestamp])
 }
 
 model Slot {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   officeId    String
-  date        String   // YYYY-MM-DD
-  startTime   String   // e.g. "10:00 AM"
-  endTime     String   // e.g. "10:15 AM"
-  capacity    Int      @default(15)
-  bookedCount Int      @default(0)
-  isAvailable Boolean  @default(true)
+  office      Office    @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  date        String    // YYYY-MM-DD
+  startTime   String    // e.g. "10:00 AM"
+  endTime     String    // e.g. "10:15 AM"
+  capacity    Int       @default(15)
+  bookedCount Int       @default(0)
+  isAvailable Boolean   @default(true)
+
+  bookings    Booking[]
+
+  @@unique([officeId, date, startTime])
+  @@index([officeId, date])
 }
 
 model Booking {
-  id             String   @id @default(cuid())
-  applicationId  String   @unique
-  slotId         String
-  tokenNumber    String   // e.g. "GZB-T104"
-  qrCodeData     String
-  date           String
-  timeSlot       String
-  officeId       String
-  status         String   @default("BOOKED") // BOOKED, CHECKED_IN, COMPLETED, NO_SHOW, CANCELLED
-  createdAt      DateTime @default(now())
+  id            String        @id @default(cuid())
+  applicationId String        @unique
+  application   Application   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  slotId        String
+  slot          Slot          @relation(fields: [slotId], references: [id], onDelete: Restrict)
+  tokenNumber   String
+  qrCodeData    String
+  date          String
+  timeSlot      String
+  officeId      String
+  office        Office        @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  status        BookingStatus @default(BOOKED)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  visits        Visit[]
+
+  @@index([slotId])
+  @@index([officeId, date])
+  @@index([status])
 }
 
 model Visit {
-  id              String   @id @default(cuid())
+  id              String      @id @default(cuid())
   bookingId       String?
+  booking         Booking?    @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   applicationId   String
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   officerId       String
+  officer         User        @relation("OfficerHandledVisits", fields: [officerId], references: [id], onDelete: Restrict)
   officeId        String
-  durationMinutes Int      @default(2)
-  isRepeatVisit   Boolean  @default(false)
-  repeatReason    String?  // Missing affidavit, Signature mismatch, Fee slip unverified, Original verification, Biometric retry
+  office          Office      @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  durationMinutes Int         @default(2)
+  isRepeatVisit   Boolean     @default(false)
+  repeatReason    String?
   notes           String?
-  completedAt     DateTime @default(now())
+  completedAt     DateTime    @default(now())
+
+  @@index([applicationId])
+  @@index([officeId])
+  @@index([officerId])
+  @@index([completedAt])
+  @@index([isRepeatVisit])
 }
 
 model Grievance {
-  id              String   @id @default(cuid())
-  ticketNumber    String   @unique
-  applicationId   String
+  id              String          @id @default(cuid())
+  ticketNumber    String          @unique
+  applicationId   String?
+  application     Application?    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   citizenName     String
   citizenPhone    String
   officeId        String
-  issueCategory   String   // "Stuck over 7 days", "Document rejected without explanation", "Counter delay"
+  office          Office          @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  issueCategory   String
   description     String
-  status          String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  status          GrievanceStatus @default(OPEN)
   resolutionNotes String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([applicationId])
+  @@index([officeId])
+  @@index([status])
+  @@index([citizenPhone])
 }
 
 model NotificationLog {
-  id             String   @id @default(cuid())
+  id             String              @id @default(cuid())
   recipientPhone String
   recipientName  String
-  channel        String   // SMS, WHATSAPP
+  channel        NotificationChannel @default(SMS)
   title          String
   message        String
-  status         String   @default("DELIVERED")
+  status         String              @default("DELIVERED")
   applicationId  String?
-  timestamp      DateTime @default(now())
+  application    Application?        @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  timestamp      DateTime            @default(now())
+
+  // DPDP Compliance
+  deletedAt      DateTime?
+  isAnonymized   Boolean             @default(false)
+
+  @@index([recipientPhone])
+  @@index([applicationId])
+  @@index([timestamp])
 }
 
 model AuditLog {
@@ -185,6 +369,10 @@ model AuditLog {
   action      String
   entityType  String
   entityId    String
-  detailsJson String
+  detailsJson Json     @default("{}")
   timestamp   DateTime @default(now())
+
+  @@index([entityId, entityType])
+  @@index([actorId])
+  @@index([timestamp])
 }

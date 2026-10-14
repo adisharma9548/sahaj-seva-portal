@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { ApplicationStatus, BookingStatus, NotificationChannel } from "@prisma/client";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
           date: slot.date,
           timeSlot: slot.startTime,
           officeId: slot.officeId,
-          status: "BOOKED",
+          status: BookingStatus.BOOKED,
         },
       });
     } else {
@@ -76,7 +79,7 @@ export async function POST(request: NextRequest) {
           date: slot.date,
           timeSlot: slot.startTime,
           officeId: slot.officeId,
-          status: "BOOKED",
+          status: BookingStatus.BOOKED,
         },
       });
     }
@@ -93,7 +96,7 @@ export async function POST(request: NextRequest) {
     await prisma.application.update({
       where: { id: app.id },
       data: {
-        status: "VISIT_SCHEDULED",
+        status: ApplicationStatus.VISIT_SCHEDULED,
         currentStage: `Slot Booked: ${slot.date} at ${slot.startTime} (Token ${tokenNumber})`,
       },
     });
@@ -118,7 +121,7 @@ export async function POST(request: NextRequest) {
       data: {
         recipientPhone: citizenPhone || app.citizenPhone,
         recipientName: citizenName || app.citizenName,
-        channel: "SMS",
+        channel: NotificationChannel.SMS,
         title: "Sahaj Seva Appointment Token",
         message: `Appointment Confirmed! Token: ${tokenNumber} on ${slot.date} at ${slot.startTime}. Your visit duration is guaranteed under 2 minutes. Show QR e-token at counter.`,
         applicationId: app.id,

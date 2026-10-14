@@ -184,7 +184,7 @@ function SmartChecklistContent() {
               <p>• As a tenant, attach your registered rent agreement PLUS the electricity bill of the owner (dated within last 90 days).</p>
             )}
             {residenceType === "owner" && (
-              <p>• As an owner, latest house tax receipt or electricity bill in applicant's name is sufficient.</p>
+              <p>• As an owner, latest house tax receipt or electricity bill in applicant&apos;s name is sufficient.</p>
             )}
           </div>
 

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { parseJsonField } from "@/lib/json-utils";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
@@ -12,6 +15,15 @@ export async function GET(
       where: {
         OR: [{ id }, { trackingNumber: id }],
       },
+      include: {
+        service: true,
+        office: true,
+        documents: true,
+        events: {
+          orderBy: { timestamp: "asc" },
+        },
+        booking: true,
+      },
     });
 
     if (!application) {
@@ -21,41 +33,26 @@ export async function GET(
       );
     }
 
-    const [service, office, documents, events, booking] = await Promise.all([
-      prisma.service.findUnique({ where: { id: application.serviceId } }),
-      prisma.office.findUnique({ where: { id: application.officeId } }),
-      prisma.applicationDocument.findMany({
-        where: { applicationId: application.id },
-      }),
-      prisma.applicationEvent.findMany({
-        where: { applicationId: application.id },
-        orderBy: { timestamp: "asc" },
-      }),
-      prisma.booking.findFirst({
-        where: { applicationId: application.id },
-      }),
-    ]);
+    const enriched = {
+      ...application,
+      service: application.service
+        ? {
+            ...application.service,
+            commonMistakes: parseJsonField<string[]>(application.service.commonMistakes, []),
+            commonMistakesHi: parseJsonField<string[]>(application.service.commonMistakesHi, []),
+            steps: parseJsonField<string[]>(application.service.stepsJson, []),
+            carryDocs: parseJsonField<string[]>(application.service.carryDocsJson, []),
+          }
+        : null,
+      documents: application.documents.map((d) => ({
+        ...d,
+        issues: parseJsonField<string[]>(d.issuesJson, []),
+      })),
+    };
 
     return NextResponse.json({
       success: true,
-      application: {
-        ...application,
-        service: service
-          ? {
-              ...service,
-              commonMistakes: JSON.parse(service.commonMistakes || "[]"),
-              commonMistakesHi: JSON.parse(service.commonMistakesHi || "[]"),
-              steps: JSON.parse(service.stepsJson || "[]"),
-            }
-          : null,
-        office,
-        documents: documents.map((d) => ({
-          ...d,
-          issues: JSON.parse(d.issuesJson || "[]"),
-        })),
-        events,
-        booking,
-      },
+      application: enriched,
     });
   } catch (error) {
     console.error("Error fetching application details:", error);

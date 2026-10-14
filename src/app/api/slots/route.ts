@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -9,22 +10,25 @@ export async function GET(request: NextRequest) {
     const officeId = searchParams.get("officeId");
     const date = searchParams.get("date");
 
-    const where: any = {};
+    const where: Prisma.SlotWhereInput = {};
     if (officeId && officeId !== "ALL") where.officeId = officeId;
     if (date) where.date = date;
 
     const slots = await prisma.slot.findMany({
       where,
+      include: {
+        office: true,
+      },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
       take: 50,
     });
 
-    const offices = await prisma.office.findMany();
-    const officeMap = new Map(offices.map((o) => [o.id, o]));
+    const offices = await prisma.office.findMany({
+      orderBy: { name: "asc" },
+    });
 
     const enriched = slots.map((s) => ({
       ...s,
-      office: officeMap.get(s.officeId),
       availableSpots: Math.max(0, s.capacity - s.bookedCount),
       estimatedWaitMins: Math.max(3, s.bookedCount * 2), // 2 mins per citizen in fast counter mode
     }));

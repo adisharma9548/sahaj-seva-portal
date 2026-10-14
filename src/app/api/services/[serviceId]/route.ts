@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { parseJsonField } from "@/lib/json-utils";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
@@ -11,6 +14,11 @@ export async function GET(
       where: {
         OR: [{ id: serviceId }, { code: serviceId }],
       },
+      include: {
+        documents: {
+          orderBy: { order: "asc" },
+        },
+      },
     });
 
     if (!service) {
@@ -20,22 +28,16 @@ export async function GET(
       );
     }
 
-    const documents = await prisma.serviceDocument.findMany({
-      where: { serviceId: service.id },
-      orderBy: { order: "asc" },
-    });
-
     const enriched = {
       ...service,
-      commonMistakes: JSON.parse(service.commonMistakes || "[]"),
-      commonMistakesHi: JSON.parse(service.commonMistakesHi || "[]"),
-      steps: JSON.parse(service.stepsJson || "[]"),
-      carryDocs: JSON.parse((service as any).carryDocsJson || "[]"),
-      processType: (service as any).processType || (service.physicalVisitRequired ? "SEMI_ONLINE" : "ONLINE"),
-      documents: documents.map((d) => ({
+      commonMistakes: parseJsonField<string[]>(service.commonMistakes, []),
+      commonMistakesHi: parseJsonField<string[]>(service.commonMistakesHi, []),
+      steps: parseJsonField<string[]>(service.stepsJson, []),
+      carryDocs: parseJsonField<string[]>(service.carryDocsJson, []),
+      documents: service.documents.map((d) => ({
         ...d,
-        alternatives: JSON.parse(d.alternativesJson || "[]"),
-        criteria: JSON.parse(d.criteriaJson || "{}"),
+        alternatives: parseJsonField<string[]>(d.alternativesJson, []),
+        criteria: parseJsonField<Record<string, unknown>>(d.criteriaJson, {}),
       })),
     };
 

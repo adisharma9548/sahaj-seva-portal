@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { ApplicationStatus, NotificationChannel } from "@prisma/client";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { applicationId, status, issues = [], officerNotes = "", officerName = "Anand Verma (Desk 3)" } = body;
+    const {
+      applicationId,
+      status,
+      issues = [],
+      officerNotes = "",
+      officerName = "Anand Verma (Desk 3)",
+    } = body;
 
     if (!applicationId || !status) {
       return NextResponse.json(
         { success: false, error: "applicationId and status are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!Object.values(ApplicationStatus).includes(status as ApplicationStatus)) {
+      return NextResponse.json(
+        { success: false, error: `Invalid status: ${status}` },
         { status: 400 }
       );
     }
@@ -24,25 +40,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const targetStatus = status as ApplicationStatus;
     let newStage = "Documents Verified";
     let eventTitle = "Documents Scrutiny Passed";
     let eventTitleHi = "दस्तावेज जांच स्वीकृत";
     let eventDesc = officerNotes || "Officer verified uploaded documents. File marked complete.";
     let eventDescHi = "अधिकारी द्वारा दस्तावेजों की जांच कर स्वीकृति दी गई।";
 
-    if (status === "ACTION_REQUIRED") {
+    if (targetStatus === ApplicationStatus.ACTION_REQUIRED) {
       newStage = "Action Required by Citizen";
       eventTitle = "Clarification / Document Correction Requested";
       eventTitleHi = "दस्तावेज सुधार की आवश्यकता";
       eventDesc = officerNotes || issues.join("; ") || "Defect flagged by front-desk officer.";
       eventDescHi = "दस्तावेज में त्रुटि पाई गई। कृपया सही दस्तावेज अपलोड करें।";
-    } else if (status === "APPROVED") {
+    } else if (targetStatus === ApplicationStatus.APPROVED) {
       newStage = "Ready / Issued";
       eventTitle = "Certificate Digitally Approved & Issued";
       eventTitleHi = "डिजिटली हस्ताक्षरित प्रमाण पत्र जारी";
       eventDesc = "Service fulfilled without requiring citizen to visit the office.";
       eventDescHi = "नागरिक को दफ्तर बुलाए बिना सेवा पूर्ण की गई।";
-    } else if (status === "REJECTED") {
+    } else if (targetStatus === ApplicationStatus.REJECTED) {
       newStage = "Application Rejected";
       eventTitle = "Application Ineligible / Rejected";
       eventTitleHi = "आवेदन अस्वीकृत";
@@ -53,11 +70,11 @@ export async function POST(request: NextRequest) {
     const updated = await prisma.application.update({
       where: { id: applicationId },
       data: {
-        status,
+        status: targetStatus,
         currentStage: newStage,
-        stuckReason: status === "ACTION_REQUIRED" ? eventDesc : null,
-        stuckReasonHi: status === "ACTION_REQUIRED" ? eventDescHi : null,
-        actionRequiredDetails: status === "ACTION_REQUIRED" ? officerNotes : null,
+        stuckReason: targetStatus === ApplicationStatus.ACTION_REQUIRED ? eventDesc : null,
+        stuckReasonHi: targetStatus === ApplicationStatus.ACTION_REQUIRED ? eventDescHi : null,
+        actionRequiredDetails: targetStatus === ApplicationStatus.ACTION_REQUIRED ? officerNotes : null,
       },
     });
 
@@ -85,11 +102,11 @@ export async function POST(request: NextRequest) {
         action: `SCRUTINY_${status}`,
         entityType: "APPLICATION",
         entityId: applicationId,
-        detailsJson: JSON.stringify({
+        detailsJson: {
           trackingNumber: app.trackingNumber,
           status,
           notes: officerNotes,
-        }),
+        },
       },
     });
 
@@ -98,7 +115,7 @@ export async function POST(request: NextRequest) {
       data: {
         recipientPhone: app.citizenPhone,
         recipientName: app.citizenName,
-        channel: "SMS",
+        channel: NotificationChannel.SMS,
         title: `Sahaj Seva Status: ${eventTitle}`,
         message: `Namaste ${app.citizenName}, your application ${app.trackingNumber} status updated to: ${newStage}. Details: ${eventDesc}`,
         applicationId,

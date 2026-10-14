@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { ApplicationStatus, BookingStatus, Role } from "@prisma/client";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,12 +48,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Resolve an existing officer User to satisfy the foreign key constraint
+    let officer = await prisma.user.findFirst({
+      where: { role: Role.OFFICER },
+    });
+    if (!officer) {
+      officer = await prisma.user.create({
+        data: {
+          email: "officer@seva.demo",
+          name: officerName,
+          role: Role.OFFICER,
+        },
+      });
+    }
+
     // 1. Create Visit record
     const visit = await prisma.visit.create({
       data: {
         bookingId: booking?.id || null,
         applicationId: app.id,
-        officerId: "demo-officer-id",
+        officerId: officer.id,
         officeId: app.officeId || officeId,
         durationMinutes: parseInt(String(durationMinutes), 10) || 2,
         isRepeatVisit: Boolean(isRepeatVisit),
@@ -63,12 +80,15 @@ export async function POST(request: NextRequest) {
     if (booking) {
       await prisma.booking.update({
         where: { id: booking.id },
-        data: { status: "COMPLETED" },
+        data: { status: BookingStatus.COMPLETED },
       });
     }
 
     // 3. Update application status
-    const newStatus = isRepeatVisit ? "ACTION_REQUIRED" : "VISIT_COMPLETED";
+    const newStatus = isRepeatVisit
+      ? ApplicationStatus.ACTION_REQUIRED
+      : ApplicationStatus.VISIT_COMPLETED;
+
     const newStage = isRepeatVisit
       ? "Repeat Visit Logged - Citizen Re-submission Needed"
       : "Counter Visit Completed - Approved & Issued";
@@ -109,19 +129,19 @@ export async function POST(request: NextRequest) {
     // 5. Audit log
     await prisma.auditLog.create({
       data: {
-        actorId: "demo-officer-id",
+        actorId: officer.id,
         actorName: officerName,
         actorRole: "OFFICER",
         action: isRepeatVisit ? "REPEAT_VISIT_LOGGED" : "VISIT_COMPLETED",
         entityType: "VISIT",
         entityId: visit.id,
-        detailsJson: JSON.stringify({
+        detailsJson: {
           tokenNumber: booking?.tokenNumber,
           trackingNumber: app.trackingNumber,
           isRepeatVisit,
           repeatReason,
           durationMinutes,
-        }),
+        },
       },
     });
 
