@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { parseJsonField } from "@/lib/json-utils";
+import * as fs from "fs";
+import * as path from "path";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +32,23 @@ export async function GET() {
 
     return NextResponse.json({ success: true, services: enriched });
   } catch (error) {
+    // Zero-setup demo fallback when PostgreSQL container is not yet started
+    if (process.env.DEMO_MODE === "true") {
+      try {
+        const filePath = path.join(process.cwd(), "data", "services.json");
+        if (fs.existsSync(filePath)) {
+          const raw = JSON.parse(fs.readFileSync(filePath, "utf8"));
+          return NextResponse.json({
+            success: true,
+            services: raw,
+            isDemoFallback: true,
+          });
+        }
+      } catch (fallbackError) {
+        console.error("Demo fallback error:", fallbackError);
+      }
+    }
+
     console.error("Error fetching services:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch services" },

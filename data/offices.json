@@ -72,7 +72,7 @@
   {
     "code": "OFF-NN-VIJAY",
     "name": "Nagar Nigam Vijay Nagar Zone",
-    "nameHi: "नगर निगम विजय नगर ज़ोन",
+    "nameHi": "नगर निगम विजय नगर ज़ोन",
     "address": "Sector 9, Vijay Nagar, Ghaziabad",
     "zone": "Vijay Nagar",
     "tehsil": "Ghaziabad",
@@ -100,7 +100,7 @@
   {
     "code": "OFF-DSO-GZB",
     "name": "District Supply Office (DSO)",
-    "nameHi: "जिला पूर्ति कार्यालय (DSO)",
+    "nameHi": "जिला पूर्ति कार्यालय (DSO)",
     "address": "Room 14, Collectorate, Ghaziabad",
     "zone": "Collectorate",
     "tehsil": "Ghaziabad",

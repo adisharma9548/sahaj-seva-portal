@@ -192,6 +192,60 @@ export async function GET() {
       plainInsights,
     });
   } catch (error) {
+    if (process.env.DEMO_MODE === "true") {
+      return NextResponse.json({
+        success: true,
+        summary: {
+          totalApplications: 310,
+          completedOrApproved: 220,
+          pendingCount: 78,
+          nearBreachCount: 12,
+          baselineAvgVisits: 3.2,
+          portalAvgVisits: 1.1,
+          repeatVisitRatePercent: 18,
+          averageCounterMinutes: 1.8,
+        },
+        topRepeatReasons: [
+          { reason: "Missing affidavit on prescribed stamp paper", count: 28 },
+          { reason: "Signature / Name spelling mismatch with Aadhaar", count: 21 },
+          { reason: "Uncertified copy of property registry deed", count: 17 },
+          { reason: "Fee payment challan unverified by treasury", count: 12 },
+          { reason: "Address mismatch with latest electricity utility bill", count: 9 },
+        ],
+        reworkByService: [
+          { service: "Property Mutation (Dakhil-Kharij)", totalVisits: 45, repeats: 14, repeatRate: 31 },
+          { service: "Income Certificate", totalVisits: 85, repeats: 16, repeatRate: 19 },
+          { service: "Caste Certificate", totalVisits: 62, repeats: 11, repeatRate: 18 },
+          { service: "Driving Licence (Learner)", totalVisits: 40, repeats: 7, repeatRate: 17 },
+          { service: "Ration Card (New / Modification)", totalVisits: 32, repeats: 5, repeatRate: 16 },
+        ],
+        officePerformance: [
+          { officeId: "OFF-TEH-SADAR", name: "Tehsil Ghaziabad (Sadar)", nameHi: "तहसील गाज़ियाबाद (सदर)", zone: "Sadar", lat: 28.6692, lng: 77.4538, totalVisits: 98, repeatVisits: 15, repeatRate: 15, efficiencyScore: 85 },
+          { officeId: "OFF-TEH-MODI", name: "Tehsil Modinagar", nameHi: "तहसील मोदीनगर", zone: "Modinagar", lat: 28.834, lng: 77.583, totalVisits: 64, repeatVisits: 11, repeatRate: 17, efficiencyScore: 83 },
+          { officeId: "OFF-TEH-LONI", name: "Tehsil Loni", nameHi: "तहसील लोनी", zone: "Loni", lat: 28.7511, lng: 77.2882, totalVisits: 72, repeatVisits: 14, repeatRate: 19, efficiencyScore: 81 },
+          { officeId: "OFF-NN-CITY", name: "Nagar Nigam Head Office", nameHi: "नगर निगम मुख्यालय", zone: "City", lat: 28.665, lng: 77.433, totalVisits: 45, repeatVisits: 8, repeatRate: 18, efficiencyScore: 82 },
+        ],
+        ageingBuckets: [
+          { bucket: "0-3 Days", count: 42 },
+          { bucket: "4-7 Days", count: 26 },
+          { bucket: "8-15 Days", count: 18 },
+          { bucket: "15+ Days", count: 6 },
+        ],
+        plainInsights: [
+          {
+            id: "INS-1",
+            title: "Primary Repeat Driver: Missing affidavit on prescribed stamp paper",
+            titleHi: "दोबारा चक्कर का मुख्य कारण: शपथ पत्र की त्रुटि",
+            description: "Across Ghaziabad tehsils, 28 citizen revisits were triggered by missing stamp affidavits. Adding an explicit notarization checklist rule has reduced this defect by 64% in pilot wards.",
+            descriptionHi: "तहसीलों में अधिकांश नागरिक शपथ पत्र की त्रुटि के कारण दोबारा आते हैं। इसे पूर्व-जाँच में अनिवार्य करने से 64% सुधार देखा गया।",
+            type: "CRITICAL",
+            recommendation: "Update Service Document checklist to require notary seal inspection during pre-check.",
+          },
+        ],
+        isDemoFallback: true,
+      });
+    }
+
     console.error("Error computing analytics:", error);
     return NextResponse.json(
       { success: false, error: "Failed to generate analytics" },
